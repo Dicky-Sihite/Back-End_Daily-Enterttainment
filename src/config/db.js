@@ -1,19 +1,19 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'daily_entertainment',
-  password: 'pw',
-  port: 5432,
+  user: process.env.DB_USER || 'postgres',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'daily_entertainment',
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT || 5432,
 });
 
 async function connectDB() {
   try {
     await pool.connect();
     console.log('Database connected successfully');
-  } catch (err) {
-    console.error('Database connection error', err);
+  } catch (error) {
+    console.error('Database connection error', error);
     process.exit(1);
   }
 }

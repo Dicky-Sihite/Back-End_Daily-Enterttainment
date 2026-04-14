@@ -3,6 +3,11 @@ const router = express.Router();
 const { register, login, refresh, logout } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 const { authorizeRoles } = require('../middleware/role');
+const {
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+  createSuccessResponse,
+} = require('../utils/constants');
 
 // REGISTER
 router.post('/register', register);
@@ -22,7 +27,9 @@ router.get(
   authenticateToken,
   authorizeRoles('admin'),
   (req, res) => {
-    res.json({ message: 'Welcome Admin' });
+    res.status(HTTP_STATUS.OK).json(
+      createSuccessResponse(null, SUCCESS_MESSAGES.WELCOME_ADMIN)
+    );
   }
 );
 
@@ -32,7 +39,9 @@ router.get(
   authenticateToken,
   authorizeRoles('user', 'admin'),
   (req, res) => {
-    res.json({ message: 'Welcome User' });
+    res.status(HTTP_STATUS.OK).json(
+      createSuccessResponse(null, SUCCESS_MESSAGES.WELCOME_USER)
+    );
   }
 );
 
