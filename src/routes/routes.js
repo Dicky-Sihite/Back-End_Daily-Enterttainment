@@ -11,7 +11,7 @@ const {
   SUCCESS_MESSAGES,
   createSuccessResponse,
 } = require('../utils/constants');
-
+router.use('/profile', require('./profileRoutes'));
 // REGISTER
 router.post('/register', register);
 
