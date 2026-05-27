@@ -1,9 +1,1138 @@
 {
   "info": {
-    "name": "Content & Bookmark API",
-    "description": "Complete API test collection for Content Management, Authentication, Bookmarks, History, and Profile management",
+    "name": "Daily Entertainment Complete API Suite",
+    "description": "Complete automated integration testing collection for Daily Entertainment Backend. Covers Authentication, Roles, Categories, Content Types, Contents, Bookmarks, History, Subscriptions, Payments, and Schedules.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = Date.now();",
+                  "pm.collectionVariables.set('test_username', 'user_' + timestamp);",
+                  "pm.collectionVariables.set('test_email', 'user_' + timestamp + '@example.com');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.test('Registration successful', function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('id');",
+                  "});",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('user_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"{{test_username}}\",\n    \"email\": \"{{test_email}}\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/register",
+              "host": ["{{base_url}}"],
+              "path": ["register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.test('Login successful and returns tokens', function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "});",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('access_token', response.data.accessToken);",
+                  "    if (response.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refresh_token', response.data.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{test_email}}\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.test('Token refreshed successfully', function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "});",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('access_token', response.data.accessToken);",
+                  "    if (response.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refresh_token', response.data.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.test('Logout successful', function () {",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "pm.collectionVariables.set('access_token', '');",
+                  "pm.collectionVariables.set('refresh_token', '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Roles Management (Admin)",
+      "item": [
+        {
+          "name": "Create Custom Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('role_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Admin Role\",\n    \"slug\": \"test-admin-role\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/roles",
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
+            }
+          }
+        },
+        {
+          "name": "Assign Role to User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": {{user_id}},\n    \"roleId\": {{role_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/roles/assign",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "assign"]
+            }
+          }
+        },
+        {
+          "name": "Get User Roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/roles/user/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "user", "{{user_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Categories & Content Types",
+      "item": [
+        {
+          "name": "Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('category_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Pop Music\",\n    \"slug\": \"test-pop-music\",\n    \"description\": \"Pop music category\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Content Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('content_type_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Music Type\",\n    \"slug\": \"test-music-type\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/content-types",
+              "host": ["{{base_url}}"],
+              "path": ["content-types"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Contents & Details Management",
+      "item": [
+        {
+          "name": "Create Core Content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('content_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Beautiful Day in Postman\",\n    \"slug\": \"beautiful-day-postman-{{$timestamp}}\",\n    \"description\": \"Core content generated automatically by tests\",\n    \"contentTypeId\": {{content_type_id}},\n    \"status\": \"published\",\n    \"categoryIds\": [{{category_id}}]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/contents",
+              "host": ["{{base_url}}"],
+              "path": ["contents"]
+            }
+          }
+        },
+        {
+          "name": "Create Type-Specific Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"artist\": \"Test Postman Artist\",\n    \"album\": \"Postman Collection Vol 1\",\n    \"durationSeconds\": 180,\n    \"audioUrl\": \"https://example.com/audio.mp3\",\n    \"lyrics\": \"These are automated test lyrics\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/contents/{{content_id}}/details",
+              "host": ["{{base_url}}"],
+              "path": ["contents", "{{content_id}}", "details"]
+            }
+          }
+        },
+        {
+          "name": "Get Content by ID (Increments Views)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "pm.test('Increment views checked', function () {",
+                  "    pm.expect(response.data).to.have.property('views_count');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/contents/{{content_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["contents", "{{content_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Engagement (Bookmarks & History)",
+      "item": [
+        {
+          "name": "Add Bookmark",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created or 200 OK', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content_id\": {{content_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookmarks",
+              "host": ["{{base_url}}"],
+              "path": ["bookmarks"]
+            }
+          }
+        },
+        {
+          "name": "Get User Bookmarks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/bookmarks",
+              "host": ["{{base_url}}"],
+              "path": ["bookmarks"]
+            }
+          }
+        },
+        {
+          "name": "Track View History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content_id\": {{content_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/histories",
+              "host": ["{{base_url}}"],
+              "path": ["histories"]
+            }
+          }
+        },
+        {
+          "name": "Get Watch History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/histories",
+              "host": ["{{base_url}}"],
+              "path": ["histories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Profiles Management",
+      "item": [
+        {
+          "name": "Create or Update Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"full_name\": \"Postman Automation Test User\",\n    \"bio\": \"This profile is verified dynamically by automatic tests.\",\n    \"date_of_birth\": \"1998-10-25\",\n    \"gender\": \"male\",\n    \"phone_number\": \"+628123456789\",\n    \"address\": \"Automated Server Road 10\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["profile"]
+            }
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Subscription Plans (Admin)",
+      "item": [
+        {
+          "name": "Create Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('plan_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Premium Pack\",\n    \"slug\": \"test-premium-pack-{{$timestamp}}\",\n    \"price\": 14.99,\n    \"durationDays\": 30,\n    \"description\": \"Automated Premium Test subscription plan\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/plans",
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
+            }
+          }
+        },
+        {
+          "name": "List Plans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/plans",
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Subscriptions Lifecycles",
+      "item": [
+        {
+          "name": "Initiate User Subscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('subscription_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"planId\": {{plan_id}},\n    \"autoRenew\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/subscriptions",
+              "host": ["{{base_url}}"],
+              "path": ["subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Get Active Subscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/subscriptions/active",
+              "host": ["{{base_url}}"],
+              "path": ["subscriptions", "active"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Billing & Payments",
+      "item": [
+        {
+          "name": "Create Payment Invoice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('payment_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"subscriptionId\": {{subscription_id}},\n    \"amount\": 14.99,\n    \"paymentMethod\": \"credit_card\",\n    \"gateway\": \"stripe\",\n    \"externalTransactionId\": \"stripe_tx_{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payments",
+              "host": ["{{base_url}}"],
+              "path": ["payments"]
+            }
+          }
+        },
+        {
+          "name": "Process Payment (Activate Subscription)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/payments/{{payment_id}}/pay",
+              "host": ["{{base_url}}"],
+              "path": ["payments", "{{payment_id}}", "pay"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Schedules Recurrence",
+      "item": [
+        {
+          "name": "Create Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data) {",
+                  "    pm.collectionVariables.set('schedule_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contentId\": {{content_id}},\n    \"title\": \"Postman Automation Weekly Release\",\n    \"description\": \"Postman scheduled content launch\",\n    \"scheduleType\": \"weekly\",\n    \"dayOfWeek\": \"Friday\",\n    \"startTime\": \"18:00:00\",\n    \"endTime\": \"20:00:00\",\n    \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/schedules",
+              "host": ["{{base_url}}"],
+              "path": ["schedules"]
+            }
+          }
+        },
+        {
+          "name": "Get Active Schedules",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/schedules",
+              "host": ["{{base_url}}"],
+              "path": ["schedules"]
+            }
+          }
+        }
+      ]
+    }
+  ],
   "variable": [
     {
       "key": "base_url",
@@ -26,7 +1155,47 @@
       "type": "string"
     },
     {
+      "key": "role_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "content_type_id",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "content_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "plan_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subscription_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "payment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schedule_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "test_username",
       "value": "",
       "type": "string"
     },
@@ -34,1156 +1203,6 @@
       "key": "test_email",
       "value": "",
       "type": "string"
-    },
-    {
-      "key": "test_password",
-      "value": "password123",
-      "type": "string"
-    }
-  ],
-  "item": [
-    {
-      "name": "Authentication",
-      "item": [
-        {
-          "name": "Register New User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"testuser_{{$timestamp}}\",\n  \"email\": \"testuser{{$timestamp}}@example.com\",\n  \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "register"
-              ]
-            },
-            "description": "Register a new user with username, email, and password"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 201",
-                  "pm.test(\"Status code is 201 Created\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "// Test: Response contains user data",
-                  "pm.test(\"Response contains user object\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data).to.have.property('username');",
-                  "    pm.expect(jsonData.data).to.have.property('email');",
-                  "});",
-                  "",
-                  "// Store credentials for login",
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    var email = jsonData.data.email;",
-                  "    pm.collectionVariables.set('user_id', jsonData.data.id);",
-                  "    pm.collectionVariables.set('test_email', email);",
-                  "    pm.collectionVariables.set('test_password', 'password123');",
-                  "    console.log('Registered email: ' + email);",
-                  "    console.log('Stored as test_email: ' + pm.collectionVariables.get('test_email'));",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "login"
-              ]
-            },
-            "description": "Login with email and password"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "var testEmail = pm.collectionVariables.get('test_email');",
-                  "var testPassword = pm.collectionVariables.get('test_password');",
-                  "console.log('Login - Using email: ' + testEmail);",
-                  "console.log('Login - Using password: ' + testPassword);",
-                  "if (!testEmail || testEmail === '') {",
-                  "    console.log('WARNING: test_email is empty!');",
-                  "}"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Debug: Log the response",
-                  "console.log('Login Response Status: ' + pm.response.code);",
-                  "if (pm.response.code !== 200) {",
-                  "    console.log('Login failed with email: ' + pm.collectionVariables.get('test_email'));",
-                  "    var errorData = pm.response.json();",
-                  "    console.log('Error message: ' + errorData.message);",
-                  "}",
-                  "",
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "// Test: Response contains access token",
-                  "pm.test(\"Response contains access token\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('accessToken');",
-                  "    pm.expect(jsonData.data.accessToken).to.not.be.empty;",
-                  "});",
-                  "",
-                  "// Test: Response contains user data",
-                  "pm.test(\"Response contains user data\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data.user).to.have.property('id');",
-                  "    pm.expect(jsonData.data.user).to.have.property('email');",
-                  "});",
-                  "",
-                  "// Store tokens for later use",
-                  "var jsonData = pm.response.json();",
-                  "pm.collectionVariables.set('access_token', jsonData.data.accessToken);",
-                  "pm.collectionVariables.set('user_id', jsonData.data.user.id);",
-                  "",
-                  "// Extract and store refresh token from cookies",
-                  "var cookies = pm.cookies.jar().cookies;",
-                  "cookies.forEach(function(cookie) {",
-                  "    if (cookie.name === 'refreshToken') {",
-                  "        pm.collectionVariables.set('refresh_token', cookie.value);",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "[DEBUG] Login with Hardcoded Test Credentials",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"testuser@gmail.com\",\n  \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "login"
-              ]
-            },
-            "description": "DEBUGGING: Try login with hardcoded credentials to test if backend is working. If this works, then the issue is with dynamic email storage. If this also fails with 401, backend login might be broken."
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "console.log('=== DEBUG LOGIN TEST ===');",
-                  "console.log('Status: ' + pm.response.code);",
-                  "console.log('Response: ' + pm.response.text());",
-                  "",
-                  "pm.test(\"[DEBUG] Hardcoded Login Test - Check console for details\", function () {",
-                  "    if (pm.response.code === 200) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.collectionVariables.set('access_token', jsonData.data.accessToken);",
-                  "        console.log('✓ Hardcoded login SUCCESS - Backend login is working!');",
-                  "        console.log('Problem is: test_email variable not being stored properly from Register');",
-                  "    } else if (pm.response.code === 401) {",
-                  "        console.log('✗ Hardcoded login FAILED (401) - Backend login might be broken');",
-                  "        console.log('Check: Does user testuser@gmail.com exist in database?');",
-                  "    } else {",
-                  "        console.log('? Unexpected status code: ' + pm.response.code);",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Refresh Access Token",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{base_url}}/refresh",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "refresh"
-              ]
-            },
-            "description": "Refresh the access token using the refresh token from cookies"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "// Test: New access token is provided",
-                  "pm.test(\"New access token is provided\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('accessToken');",
-                  "    pm.expect(jsonData.data.accessToken).to.not.be.empty;",
-                  "});",
-                  "",
-                  "// Update access token",
-                  "var jsonData = pm.response.json();",
-                  "pm.collectionVariables.set('access_token', jsonData.data.accessToken);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Logout User",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": ""
-            },
-            "url": {
-              "raw": "{{base_url}}/logout",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "logout"
-              ]
-            },
-            "description": "Logout the current user"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Content Management",
-      "item": [
-        {
-          "name": "Create Content",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Interesting Article {{$timestamp}}\",\n  \"description\": \"This is an interesting article about technology and innovation\",\n  \"category_id\": 1,\n  \"thumbnail\": \"https://via.placeholder.com/300x200?text=Article\",\n  \"url\": \"https://example.com/article-{{$timestamp}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/contents",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "contents"
-              ]
-            },
-            "description": "Create a new content item"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 201",
-                  "pm.test(\"Status code is 201 Created\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "// Test: Content object contains required fields",
-                  "pm.test(\"Content object has required fields\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.have.property('id');",
-                  "    pm.expect(jsonData.data).to.have.property('title');",
-                  "    pm.expect(jsonData.data).to.have.property('url');",
-                  "});",
-                  "",
-                  "// Store content_id for later use",
-                  "if (pm.response.code === 201) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('content_id', jsonData.data.id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get All Contents",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/contents",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "contents"
-              ]
-            },
-            "description": "Retrieve all content items (public endpoint, no auth required)"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response is an array",
-                  "pm.test(\"Response data is an array\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.be.an('array');",
-                  "});",
-                  "",
-                  "// Test: Each content item has required fields",
-                  "pm.test(\"Content items have required fields\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data.length > 0) {",
-                  "        pm.expect(jsonData.data[0]).to.have.property('id');",
-                  "        pm.expect(jsonData.data[0]).to.have.property('title');",
-                  "        pm.expect(jsonData.data[0]).to.have.property('url');",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Content By ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/contents/{{content_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "contents",
-                "{{content_id}}"
-              ]
-            },
-            "description": "Retrieve a specific content item by ID"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});",
-                  "",
-                  "// Test: Content has correct ID",
-                  "pm.test(\"Content has correct ID\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data.id.toString()).to.equal(pm.collectionVariables.get('content_id'));",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Bookmarks",
-      "item": [
-        {
-          "name": "Add Bookmark",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"content_id\": {{content_id}}\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/bookmarks",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "bookmarks"
-              ]
-            },
-            "description": "Add a content item to user's bookmarks"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 201 or 200",
-                  "pm.test(\"Status code is 201 or 200\", function () {",
-                  "    pm.expect([200, 201]).to.include(pm.response.code);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get User Bookmarks",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/bookmarks",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "bookmarks"
-              ]
-            },
-            "description": "Retrieve all bookmarks for the current user"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response is an array",
-                  "pm.test(\"Response data is an array\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.be.an('array');",
-                  "});",
-                  "",
-                  "// Test: Each bookmark has required fields",
-                  "pm.test(\"Bookmarks have required fields\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data.length > 0) {",
-                  "        pm.expect(jsonData.data[0]).to.have.property('user_id');",
-                  "        pm.expect(jsonData.data[0]).to.have.property('content_id');",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Remove Bookmark",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/bookmarks/{{content_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "bookmarks",
-                "{{content_id}}"
-              ]
-            },
-            "description": "Remove a content item from user's bookmarks"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200 or 404",
-                  "pm.test(\"Status code is 200 or 404\", function () {",
-                  "    pm.expect([200, 404]).to.include(pm.response.code);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response structure is correct\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('success');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "History",
-      "item": [
-        {
-          "name": "Track History",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"content_id\": {{content_id}}\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/histories",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "histories"
-              ]
-            },
-            "description": "Track that a user has viewed a content item"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 201",
-                  "pm.test(\"Status code is 201 Created\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "// Test: Response has success flag",
-                  "pm.test(\"Response has success flag\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get User History",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/histories",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "histories"
-              ]
-            },
-            "description": "Retrieve the view history for the current user"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response is an array",
-                  "pm.test(\"Response data is an array\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.data).to.be.an('array');",
-                  "});",
-                  "",
-                  "// Test: Each history item has required fields",
-                  "pm.test(\"History items have required fields\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.data.length > 0) {",
-                  "        pm.expect(jsonData.data[0]).to.have.property('user_id');",
-                  "        pm.expect(jsonData.data[0]).to.have.property('content_id');",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Profile",
-      "item": [
-        {
-          "name": "Create/Update Profile",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bio\": \"I love reading interesting content about technology and innovation\",\n  \"profile_picture\": \"https://via.placeholder.com/150\",\n  \"phone\": \"+1234567890\",\n  \"location\": \"San Francisco, CA\",\n  \"website\": \"https://example.com\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/profile",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "profile"
-              ]
-            },
-            "description": "Create or update user profile"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response has message field",
-                  "pm.test(\"Response has message field\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Profile",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/profile",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "profile"
-              ]
-            },
-            "description": "Retrieve current user's profile"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response contains data",
-                  "pm.test(\"Response contains data\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an('object');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Delete Profile",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/profile",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "profile"
-              ]
-            },
-            "description": "Delete current user's profile"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response has message field",
-                  "pm.test(\"Response has message field\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('message');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Role-Based Access",
-      "item": [
-        {
-          "name": "Admin Access Test",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/admin",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "admin"
-              ]
-            },
-            "description": "Test admin-only endpoint (requires admin role)"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200 or 403",
-                  "pm.test(\"Status code is 200 (admin) or 403 (forbidden)\", function () {",
-                  "    pm.expect([200, 403]).to.include(pm.response.code);",
-                  "});",
-                  "",
-                  "// Test: Response structure",
-                  "pm.test(\"Response has expected structure\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (pm.response.code === 200) {",
-                  "        pm.expect(jsonData).to.have.property('message');",
-                  "        pm.expect(jsonData.message).to.include('Admin');",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "User Access Test",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/user",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "user"
-              ]
-            },
-            "description": "Test user-accessible endpoint (requires user or admin role)"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 200",
-                  "pm.test(\"Status code is 200 OK\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "// Test: Response has welcome message",
-                  "pm.test(\"Response contains welcome message\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.include('User');",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Error Scenarios",
-      "item": [
-        {
-          "name": "Login with Invalid Credentials",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"nonexistent@example.com\",\n  \"password\": \"wrongpassword\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "login"
-              ]
-            },
-            "description": "Test login with invalid credentials"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 401 or 404",
-                  "pm.test(\"Status code is 401 or 404\", function () {",
-                  "    pm.expect([401, 404]).to.include(pm.response.code);",
-                  "});",
-                  "",
-                  "// Test: Response has error message",
-                  "pm.test(\"Response has error message\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.false;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Access Protected Endpoint Without Token",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/bookmarks",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "bookmarks"
-              ]
-            },
-            "description": "Test accessing protected endpoint without authentication token"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 401",
-                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
-                  "    pm.response.to.have.status(401);",
-                  "});",
-                  "",
-                  "// Test: Response has error message",
-                  "pm.test(\"Response indicates missing token\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.false;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Create Content with Missing Required Fields",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"description\": \"Missing title and URL\",\n  \"category_id\": 1\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/contents",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "contents"
-              ]
-            },
-            "description": "Test creating content with missing required fields"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 400",
-                  "pm.test(\"Status code is 400 Bad Request\", function () {",
-                  "    pm.response.to.have.status(400);",
-                  "});",
-                  "",
-                  "// Test: Response has error message",
-                  "pm.test(\"Response has error message\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.success).to.be.false;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Non-Existent Content",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/contents/99999",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "contents",
-                "99999"
-              ]
-            },
-            "description": "Test retrieving a non-existent content item"
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "// Test: Status code is 404 or returns null",
-                  "pm.test(\"Status code is 404 or 200 with null data\", function () {",
-                  "    var code = pm.response.code;",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect((code === 404) || (code === 200 && jsonData.data === null)).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
     }
   ]
 }

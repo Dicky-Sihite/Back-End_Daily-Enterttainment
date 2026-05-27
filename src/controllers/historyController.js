@@ -1,4 +1,4 @@
-const HistoryModel = require('../models/historyModel');
+const History = require('../models/historyModel');
 const { HTTP_STATUS, createSuccessResponse, createErrorResponse } = require('../utils/constants');
 
 const trackHistory = async (req, res) => {
@@ -12,14 +12,20 @@ const trackHistory = async (req, res) => {
       );
     }
 
-    const history = await HistoryModel.addHistory(user_id, content_id);
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    const history = await History.addHistory(user_id, content_id);
     return res.status(HTTP_STATUS.CREATED).json(
       createSuccessResponse(history, 'History tracked successfully')
     );
   } catch (error) {
     console.error('Track history error:', error);
     return res.status(HTTP_STATUS.SERVER_ERROR).json(
-      createErrorResponse('Error tracking history')
+      createErrorResponse(error.message || 'Error tracking history')
     );
   }
 };
@@ -27,7 +33,14 @@ const trackHistory = async (req, res) => {
 const getUserHistory = async (req, res) => {
   try {
     const user_id = req.user ? (req.user.id || req.user.userId) : null;
-    const histories = await HistoryModel.findByUser(user_id);
+
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    const histories = await History.findByUser(user_id);
 
     return res.status(HTTP_STATUS.OK).json(
       createSuccessResponse(histories, 'History retrieved successfully')
@@ -35,12 +48,36 @@ const getUserHistory = async (req, res) => {
   } catch (error) {
     console.error('Get history error:', error);
     return res.status(HTTP_STATUS.SERVER_ERROR).json(
-      createErrorResponse('Error retrieving history')
+      createErrorResponse(error.message || 'Error retrieving history')
+    );
+  }
+};
+
+const clearUserHistory = async (req, res) => {
+  try {
+    const user_id = req.user ? (req.user.id || req.user.userId) : null;
+
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    await History.clearUserHistory(user_id);
+
+    return res.status(HTTP_STATUS.OK).json(
+      createSuccessResponse(null, 'History cleared successfully')
+    );
+  } catch (error) {
+    console.error('Clear history error:', error);
+    return res.status(HTTP_STATUS.SERVER_ERROR).json(
+      createErrorResponse(error.message || 'Error clearing history')
     );
   }
 };
 
 module.exports = {
   trackHistory,
-  getUserHistory
+  getUserHistory,
+  clearUserHistory
 };
