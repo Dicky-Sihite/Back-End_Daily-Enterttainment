@@ -13,6 +13,7 @@ const uploadImage = async (req, res) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: "daily-entertainment",
+          resource_type: "auto",
         },
         (error, result) => {
           if (error) reject(error);

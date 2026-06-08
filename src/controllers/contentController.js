@@ -1,7 +1,27 @@
 const Content = require('../models/contentModel');
 const ContentCategory = require('../models/contentCategoryModel');
 const ContentType = require('../models/contentTypeModel');
+const MovieDetails = require('../models/movieDetailsModel');
+const MusicDetails = require('../models/musicDetailsModel');
+const NewsDetails = require('../models/newsDetailsModel');
 const { HTTP_STATUS, createSuccessResponse, createErrorResponse } = require('../utils/constants');
+const cloudinary = require('../config/cloudinary');
+
+const uploadBase64ToCloudinary = async (base64String, folder = 'daily-entertainment') => {
+  if (!base64String || !base64String.startsWith('data:')) {
+    return base64String;
+  }
+  try {
+    const uploadResult = await cloudinary.uploader.upload(base64String, {
+      folder,
+      resource_type: "auto"
+    });
+    return uploadResult.secure_url;
+  } catch (error) {
+    console.error('Error uploading base64 to Cloudinary:', error);
+    throw new Error('Gagal mengunggah file ke Cloudinary: ' + error.message);
+  }
+};
 
 const createContent = async (req, res) => {
   try {
@@ -20,6 +40,12 @@ const createContent = async (req, res) => {
       );
     }
 
+    // Auto-upload base64 thumbnail if present
+    let thumbnailUrl = thumbnail;
+    if (thumbnail && thumbnail.startsWith('data:')) {
+      thumbnailUrl = await uploadBase64ToCloudinary(thumbnail);
+    }
+
     // Create content
     const content = await Content.create({
       userId,
@@ -27,7 +53,7 @@ const createContent = async (req, res) => {
       title,
       slug,
       description,
-      thumbnail,
+      thumbnail: thumbnailUrl,
       status
     });
 
@@ -38,8 +64,59 @@ const createContent = async (req, res) => {
       }
     }
 
+    // Automatically create details based on contentTypeId / slug of the type
+    const contentType = await ContentType.findById(contentTypeId);
+    const typeSlug = contentType ? contentType.slug.toLowerCase() : '';
+    
+    let details = null;
+    if (typeSlug === 'movie') {
+      let videoUrl = req.body.videoUrl || req.body.url || '#';
+      if (videoUrl && videoUrl.startsWith('data:')) {
+        videoUrl = await uploadBase64ToCloudinary(videoUrl);
+      }
+      let director = req.body.director;
+      if (!director && description) {
+        if (description.includes('Sutradara:')) {
+          const parts = description.split('\nSinopsis: ');
+          director = parts[0].replace('Sutradara: ', '').trim();
+        }
+      }
+      if (!director) director = 'Tidak diketahui';
+      details = await MovieDetails.create(content.id, { director, videoUrl });
+    } else if (typeSlug === 'music') {
+      let audioUrl = req.body.audioUrl || req.body.url || '#';
+      if (audioUrl && audioUrl.startsWith('data:')) {
+        audioUrl = await uploadBase64ToCloudinary(audioUrl);
+      }
+      let artist = req.body.artist;
+      if (!artist && description) {
+        if (description.includes('Artis:')) {
+          const parts = description.split('\n');
+          artist = parts[0].replace('Artis: ', '').trim();
+        }
+      }
+      if (!artist) artist = 'Tidak diketahui';
+      details = await MusicDetails.create(content.id, { artist, audioUrl });
+    } else if (typeSlug === 'news') {
+      const author = req.body.author || 'Admin';
+      const body = req.body.body || description || '';
+      details = await NewsDetails.create(content.id, { author, body });
+    }
+
+    // Merge details into the returned content object for immediate frontend use
+    const contentWithDetails = {
+      ...content,
+      director: details ? details.director : undefined,
+      video_url: details ? details.video_url : undefined,
+      artist: details ? details.artist : undefined,
+      audio_url: details ? details.audio_url : undefined,
+      author: details ? details.author : undefined,
+      body: details ? details.body : undefined,
+      url: details ? (details.video_url || details.audio_url) : undefined
+    };
+
     return res.status(HTTP_STATUS.CREATED).json(
-      createSuccessResponse(content, 'Content created successfully')
+      createSuccessResponse(contentWithDetails, 'Content created successfully')
     );
   } catch (error) {
     console.error('Create content error:', error);
@@ -106,17 +183,97 @@ const updateContent = async (req, res) => {
       );
     }
 
+    // Auto-upload base64 thumbnail if present
+    let thumbnailUrl = thumbnail;
+    if (thumbnail && thumbnail.startsWith('data:')) {
+      thumbnailUrl = await uploadBase64ToCloudinary(thumbnail);
+    }
+
     const updated = await Content.update(id, {
       title,
       slug,
       description,
-      thumbnail,
+      thumbnail: thumbnailUrl,
       status,
       publishedAt
     });
 
+    // Automatically update details based on content type
+    const contentType = await ContentType.findById(content.content_type_id);
+    const typeSlug = contentType ? contentType.slug.toLowerCase() : '';
+
+    let details = null;
+    if (typeSlug === 'movie') {
+      let videoUrl = req.body.videoUrl || req.body.url;
+      if (videoUrl && videoUrl.startsWith('data:')) {
+        videoUrl = await uploadBase64ToCloudinary(videoUrl);
+      }
+      let director = req.body.director;
+      const desc = description || content.description;
+      if (!director && desc) {
+        if (desc.includes('Sutradara:')) {
+          const parts = desc.split('\nSinopsis: ');
+          director = parts[0].replace('Sutradara: ', '').trim();
+        }
+      }
+      
+      if (director || videoUrl) {
+        const existing = await MovieDetails.findByContentId(id);
+        if (existing) {
+          details = await MovieDetails.update(id, { director, videoUrl });
+        } else {
+          details = await MovieDetails.create(id, { director: director || 'Tidak diketahui', videoUrl: videoUrl || '#' });
+        }
+      }
+    } else if (typeSlug === 'music') {
+      let audioUrl = req.body.audioUrl || req.body.url;
+      if (audioUrl && audioUrl.startsWith('data:')) {
+        audioUrl = await uploadBase64ToCloudinary(audioUrl);
+      }
+      let artist = req.body.artist;
+      const desc = description || content.description;
+      if (!artist && desc) {
+        if (desc.includes('Artis:')) {
+          const parts = desc.split('\n');
+          artist = parts[0].replace('Artis: ', '').trim();
+        }
+      }
+      
+      if (artist || audioUrl) {
+        const existing = await MusicDetails.findByContentId(id);
+        if (existing) {
+          details = await MusicDetails.update(id, { artist, audioUrl });
+        } else {
+          details = await MusicDetails.create(id, { artist: artist || 'Tidak diketahui', audioUrl: audioUrl || '#' });
+        }
+      }
+    } else if (typeSlug === 'news') {
+      const author = req.body.author;
+      const body = req.body.body || description;
+      
+      if (author || body) {
+        const existing = await NewsDetails.findByContentId(id);
+        if (existing) {
+          details = await NewsDetails.update(id, { author, body });
+        } else {
+          details = await NewsDetails.create(id, { author: author || 'Admin', body: body || description || content.description || '' });
+        }
+      }
+    }
+
+    const updatedWithDetails = {
+      ...updated,
+      director: details ? details.director : undefined,
+      video_url: details ? details.video_url : undefined,
+      artist: details ? details.artist : undefined,
+      audio_url: details ? details.audio_url : undefined,
+      author: details ? details.author : undefined,
+      body: details ? details.body : undefined,
+      url: details ? (details.video_url || details.audio_url) : undefined
+    };
+
     return res.status(HTTP_STATUS.OK).json(
-      createSuccessResponse(updated, 'Content updated successfully')
+      createSuccessResponse(updatedWithDetails, 'Content updated successfully')
     );
   } catch (error) {
     console.error('Update content error:', error);
