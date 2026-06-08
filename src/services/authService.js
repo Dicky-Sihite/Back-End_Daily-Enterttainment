@@ -1,7 +1,10 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
-const { pool } = require('../config/db');
+const User = require('../models/userModel');
+const UserRole = require('../models/userRoleModel');
+const RefreshToken = require('../models/refreshTokenModel');
+const Role = require('../models/roleModel');
 
 // HELPER: GENERATE ACCESS TOKEN
 function generateAccessToken(user) {
@@ -33,19 +36,8 @@ async function comparePassword(plainPassword, hashedPassword) {
 
 // HELPER: GET USER ROLES
 async function getUserRoles(userId) {
-  const result = await pool.query(
-    `SELECT r.name
-     FROM roles r
-     JOIN user_roles ur ON ur.role_id = r.id
-     WHERE ur.user_id = $1`,
-    [userId]
-  );
-  return result.rows.map(row => row.name);
-}
-
-// HELPER: HASH REFRESH TOKEN
-async function hashRefreshToken(token) {
-  return await bcrypt.hash(token, 10);
+  const roles = await UserRole.findByUserId(userId);
+  return roles.map(role => role.name);
 }
 
 // REGISTER SERVICE
@@ -78,24 +70,20 @@ async function registerUser(username, email, password) {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Insert user
-    const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash)
-       VALUES ($1, $2, $3)
-       RETURNING id, username, email`,
-      [username, email, passwordHash]
-    );
+    // Create user using model
+    const user = await User.create(username, email, passwordHash);
 
-    const userId = result.rows[0].id;
+    // Get user role and assign it
+    const userRole = await Role.findByName('user');
+    if (userRole) {
+      await UserRole.assignRole(user.id, userRole.id);
+    }
 
-    // Assign default role
-    await pool.query(
-      `INSERT INTO user_roles (user_id, role_id)
-       SELECT $1, id FROM roles WHERE name = 'user'`,
-      [userId]
-    );
-
-    return result.rows[0];
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email
+    };
   } catch (error) {
     if (error.code === '23505') {
       throw {
@@ -117,22 +105,17 @@ async function loginUser(email, password) {
     };
   }
 
-  // Cari user berdasarkan email
-  const userResult = await pool.query(
-    `SELECT * FROM users WHERE email = $1`,
-    [email]
-  );
+  // Find user by email using model
+  const user = await User.findByEmail(email);
 
-  if (userResult.rows.length === 0) {
+  if (!user) {
     throw {
       status: 401,
       message: 'User tidak ditemukan',
     };
   }
 
-  const user = userResult.rows[0];
-
-  // Validasi password
+  // Validate password
   const isValidPassword = await comparePassword(password, user.password_hash);
   if (!isValidPassword) {
     throw {
@@ -141,34 +124,28 @@ async function loginUser(email, password) {
     };
   }
 
-  // Dapatkan roles user
+  // Get user roles
   const roles = await getUserRoles(user.id);
 
   // Generate tokens
   const accessToken = generateAccessToken({ id: user.id, roles });
   const refreshToken = generateRefreshToken(user.id);
 
-  // Hash dan simpan refresh token
-  const hashedToken = await hashRefreshToken(refreshToken);
+  // Calculate expiration date (7 days from now)
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
 
-  await pool.query(
-    `INSERT INTO refresh_tokens (user_id, token, expires_at)
-     VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
-    [user.id, hashedToken]
-  );
+  // Save refresh token using model
+  await RefreshToken.create(user.id, refreshToken, expiresAt);
 
-  // Limit devices (max 5 session)
-  await pool.query(
-    `DELETE FROM refresh_tokens
-     WHERE user_id = $1
-     AND id NOT IN (
-       SELECT id FROM refresh_tokens
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT 5
-     )`,
-    [user.id]
-  );
+  // Clean up old tokens (keep only 5 recent ones)
+  const allTokens = await RefreshToken.findByUserId(user.id);
+  if (allTokens.length > 5) {
+    const tokensToDelete = allTokens.slice(5);
+    for (const token of tokensToDelete) {
+      await RefreshToken.delete(token.token);
+    }
+  }
 
   return {
     accessToken,
@@ -201,37 +178,19 @@ async function refreshAccessToken(token) {
     };
   }
 
-  // Cari refresh token di database
-  const result = await pool.query(
-    `SELECT * FROM refresh_tokens 
-     WHERE user_id = $1 AND expires_at > NOW()`,
-    [decoded.id]
-  );
-
-  let validTokenRow = null;
-
-  // Validasi token
-  for (const row of result.rows) {
-    const isValid = await bcrypt.compare(token, row.token);
-    if (isValid) {
-      validTokenRow = row;
-      break;
-    }
-  }
-
-  if (!validTokenRow) {
+  // Cari dan validasi refresh token menggunakan model
+  const validToken = await RefreshToken.findByToken(token);
+  
+  if (!validToken) {
     throw {
       status: 403,
       message: 'Token tidak valid',
     };
   }
 
-  // Deteksi reuse token
-  if (validTokenRow.is_used) {
-    await pool.query(
-      `DELETE FROM refresh_tokens WHERE user_id = $1`,
-      [decoded.id]
-    );
+  // Detect token reuse
+  if (validToken.is_used) {
+    await RefreshToken.deleteByUserId(decoded.id);
 
     throw {
       status: 403,
@@ -239,29 +198,27 @@ async function refreshAccessToken(token) {
     };
   }
 
-  // Tandai token lama sebagai used
-  await pool.query(
-    `UPDATE refresh_tokens SET is_used = TRUE WHERE id = $1`,
-    [validTokenRow.id]
-  );
+  // Mark old token as used
+  await RefreshToken.markAsUsed(token);
 
-  // Dapatkan roles user terbaru
+  // Get latest user roles
   const roles = await getUserRoles(decoded.id);
 
-  // Generate token baru
+  // Generate new refresh token
   const newRefreshToken = generateRefreshToken(decoded.id);
-  const hashedToken = await hashRefreshToken(newRefreshToken);
 
-  await pool.query(
-    `INSERT INTO refresh_tokens (user_id, token, expires_at, is_used)
-     VALUES ($1, $2, NOW() + INTERVAL '7 days', FALSE)`,
-    [decoded.id, hashedToken]
-  );
+  // Calculate expiration date
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
 
-  const newAccessToken = generateAccessToken({ id: decoded.id, roles });
+  // Save new refresh token
+  await RefreshToken.create(decoded.id, newRefreshToken, expiresAt);
+
+  // Generate new access token
+  const accessToken = generateAccessToken({ id: decoded.id, roles });
 
   return {
-    accessToken: newAccessToken,
+    accessToken,
     refreshToken: newRefreshToken,
   };
 }
@@ -279,19 +236,8 @@ async function logoutUser(token) {
     return true; // Invalid token, tetap logout
   }
 
-  // Cari dan delete refresh token
-  const result = await pool.query(
-    `SELECT * FROM refresh_tokens WHERE user_id = $1`,
-    [decoded.id]
-  );
-
-  for (const row of result.rows) {
-    const isValid = await bcrypt.compare(token, row.token);
-    if (isValid) {
-      await pool.query(`DELETE FROM refresh_tokens WHERE id = $1`, [row.id]);
-      break;
-    }
-  }
+  // Delete refresh token using model
+  await RefreshToken.delete(token);
 
   return true;
 }
