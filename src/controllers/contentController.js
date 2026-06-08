@@ -47,13 +47,30 @@ const createContent = async (req, res) => {
     
     let details = null;
     if (typeSlug === 'movie') {
-      const { director = 'Tidak diketahui', videoUrl = '#' } = req.body;
+      const videoUrl = req.body.videoUrl || req.body.url || '#';
+      let director = req.body.director;
+      if (!director && description) {
+        if (description.includes('Sutradara:')) {
+          const parts = description.split('\nSinopsis: ');
+          director = parts[0].replace('Sutradara: ', '').trim();
+        }
+      }
+      if (!director) director = 'Tidak diketahui';
       details = await MovieDetails.create(content.id, { director, videoUrl });
     } else if (typeSlug === 'music') {
-      const { artist = 'Tidak diketahui', audioUrl = '#' } = req.body;
+      const audioUrl = req.body.audioUrl || req.body.url || '#';
+      let artist = req.body.artist;
+      if (!artist && description) {
+        if (description.includes('Artis:')) {
+          const parts = description.split('\n');
+          artist = parts[0].replace('Artis: ', '').trim();
+        }
+      }
+      if (!artist) artist = 'Tidak diketahui';
       details = await MusicDetails.create(content.id, { artist, audioUrl });
     } else if (typeSlug === 'news') {
-      const { author = 'Admin', body = description || '' } = req.body;
+      const author = req.body.author || 'Admin';
+      const body = req.body.body || description || '';
       details = await NewsDetails.create(content.id, { author, body });
     }
 
@@ -152,7 +169,16 @@ const updateContent = async (req, res) => {
 
     let details = null;
     if (typeSlug === 'movie') {
-      const { director, videoUrl } = req.body;
+      const videoUrl = req.body.videoUrl || req.body.url;
+      let director = req.body.director;
+      const desc = description || content.description;
+      if (!director && desc) {
+        if (desc.includes('Sutradara:')) {
+          const parts = desc.split('\nSinopsis: ');
+          director = parts[0].replace('Sutradara: ', '').trim();
+        }
+      }
+      
       if (director || videoUrl) {
         const existing = await MovieDetails.findByContentId(id);
         if (existing) {
@@ -162,7 +188,16 @@ const updateContent = async (req, res) => {
         }
       }
     } else if (typeSlug === 'music') {
-      const { artist, audioUrl } = req.body;
+      const audioUrl = req.body.audioUrl || req.body.url;
+      let artist = req.body.artist;
+      const desc = description || content.description;
+      if (!artist && desc) {
+        if (desc.includes('Artis:')) {
+          const parts = desc.split('\n');
+          artist = parts[0].replace('Artis: ', '').trim();
+        }
+      }
+      
       if (artist || audioUrl) {
         const existing = await MusicDetails.findByContentId(id);
         if (existing) {
@@ -172,13 +207,15 @@ const updateContent = async (req, res) => {
         }
       }
     } else if (typeSlug === 'news') {
-      const { author, body } = req.body;
+      const author = req.body.author;
+      const body = req.body.body || description;
+      
       if (author || body) {
         const existing = await NewsDetails.findByContentId(id);
         if (existing) {
           details = await NewsDetails.update(id, { author, body });
         } else {
-          details = await NewsDetails.create(id, { author: author || 'Admin', body: body || description || '' });
+          details = await NewsDetails.create(id, { author: author || 'Admin', body: body || description || content.description || '' });
         }
       }
     }
