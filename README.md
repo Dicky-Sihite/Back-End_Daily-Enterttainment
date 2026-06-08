@@ -117,18 +117,3 @@ npm test       # Run tests (coming soon)
 - **Bcrypt** - Password hashing
 - **Nodemon** - Dev auto-reload
 
-## 📝 Environment Variables
-
-Lihat [.env.example](.env.example) untuk lengkap.
-
-## 🤝 Contributing
-
-1. Fork repository
-2. Buat branch feature (`git checkout -b fitur/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin fitur/AmazingFeature`)
-5. Buat Pull Request
-
-## 📄 License
-
-ISC
