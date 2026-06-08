@@ -166,7 +166,7 @@ npm start
 
 ### Test Register
 ```bash
-curl -X POST http://localhost:3000/api/auth/register \
+curl -X POST http://localhost:3000/api/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
@@ -177,7 +177,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 
 ### Test Login
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:3000/api/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",

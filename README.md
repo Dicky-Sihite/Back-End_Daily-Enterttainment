@@ -94,8 +94,8 @@ server.js           # Entry point
 ## 🔧 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register user
-- `POST /api/auth/login` - Login user
+- `POST /api/register` - Register user
+- `POST /api/login` - Login user
 - `POST /api/auth/refresh` - Refresh token
 - `POST /api/auth/logout` - Logout user
 

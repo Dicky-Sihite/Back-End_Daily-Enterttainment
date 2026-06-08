@@ -73,6 +73,12 @@ const {
   getUserRoles,
 } = require('../controllers/roleController');
 const {
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+} = require('../controllers/userController');
+const {
   HTTP_STATUS,
   SUCCESS_MESSAGES,
   createSuccessResponse,
@@ -193,5 +199,11 @@ router.delete('/roles/:id', authenticateToken, authorizeRoles('admin'), deleteRo
 router.post('/roles/assign', authenticateToken, authorizeRoles('admin'), assignUserRole);
 router.post('/roles/remove', authenticateToken, authorizeRoles('admin'), removeUserRole);
 router.get('/roles/user/:userId', authenticateToken, authorizeRoles('admin', 'moderator'), getUserRoles);
+
+// USER MANAGEMENT routes
+router.get('/users', authenticateToken, authorizeRoles('admin'), getAllUsers);
+router.post('/users', authenticateToken, authorizeRoles('admin'), createUser);
+router.put('/users/:id', authenticateToken, authorizeRoles('admin'), updateUser);
+router.delete('/users/:id', authenticateToken, authorizeRoles('admin'), deleteUser);
 
 module.exports = router;
