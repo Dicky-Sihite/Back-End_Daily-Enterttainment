@@ -5,6 +5,23 @@ const MovieDetails = require('../models/movieDetailsModel');
 const MusicDetails = require('../models/musicDetailsModel');
 const NewsDetails = require('../models/newsDetailsModel');
 const { HTTP_STATUS, createSuccessResponse, createErrorResponse } = require('../utils/constants');
+const cloudinary = require('../config/cloudinary');
+
+const uploadBase64ToCloudinary = async (base64String, folder = 'daily-entertainment') => {
+  if (!base64String || !base64String.startsWith('data:')) {
+    return base64String;
+  }
+  try {
+    const uploadResult = await cloudinary.uploader.upload(base64String, {
+      folder,
+      resource_type: "auto"
+    });
+    return uploadResult.secure_url;
+  } catch (error) {
+    console.error('Error uploading base64 to Cloudinary:', error);
+    throw new Error('Gagal mengunggah file ke Cloudinary: ' + error.message);
+  }
+};
 
 const createContent = async (req, res) => {
   try {
@@ -23,6 +40,12 @@ const createContent = async (req, res) => {
       );
     }
 
+    // Auto-upload base64 thumbnail if present
+    let thumbnailUrl = thumbnail;
+    if (thumbnail && thumbnail.startsWith('data:')) {
+      thumbnailUrl = await uploadBase64ToCloudinary(thumbnail);
+    }
+
     // Create content
     const content = await Content.create({
       userId,
@@ -30,7 +53,7 @@ const createContent = async (req, res) => {
       title,
       slug,
       description,
-      thumbnail,
+      thumbnail: thumbnailUrl,
       status
     });
 
@@ -47,7 +70,10 @@ const createContent = async (req, res) => {
     
     let details = null;
     if (typeSlug === 'movie') {
-      const videoUrl = req.body.videoUrl || req.body.url || '#';
+      let videoUrl = req.body.videoUrl || req.body.url || '#';
+      if (videoUrl && videoUrl.startsWith('data:')) {
+        videoUrl = await uploadBase64ToCloudinary(videoUrl);
+      }
       let director = req.body.director;
       if (!director && description) {
         if (description.includes('Sutradara:')) {
@@ -58,7 +84,10 @@ const createContent = async (req, res) => {
       if (!director) director = 'Tidak diketahui';
       details = await MovieDetails.create(content.id, { director, videoUrl });
     } else if (typeSlug === 'music') {
-      const audioUrl = req.body.audioUrl || req.body.url || '#';
+      let audioUrl = req.body.audioUrl || req.body.url || '#';
+      if (audioUrl && audioUrl.startsWith('data:')) {
+        audioUrl = await uploadBase64ToCloudinary(audioUrl);
+      }
       let artist = req.body.artist;
       if (!artist && description) {
         if (description.includes('Artis:')) {
@@ -154,11 +183,17 @@ const updateContent = async (req, res) => {
       );
     }
 
+    // Auto-upload base64 thumbnail if present
+    let thumbnailUrl = thumbnail;
+    if (thumbnail && thumbnail.startsWith('data:')) {
+      thumbnailUrl = await uploadBase64ToCloudinary(thumbnail);
+    }
+
     const updated = await Content.update(id, {
       title,
       slug,
       description,
-      thumbnail,
+      thumbnail: thumbnailUrl,
       status,
       publishedAt
     });
@@ -169,7 +204,10 @@ const updateContent = async (req, res) => {
 
     let details = null;
     if (typeSlug === 'movie') {
-      const videoUrl = req.body.videoUrl || req.body.url;
+      let videoUrl = req.body.videoUrl || req.body.url;
+      if (videoUrl && videoUrl.startsWith('data:')) {
+        videoUrl = await uploadBase64ToCloudinary(videoUrl);
+      }
       let director = req.body.director;
       const desc = description || content.description;
       if (!director && desc) {
@@ -188,7 +226,10 @@ const updateContent = async (req, res) => {
         }
       }
     } else if (typeSlug === 'music') {
-      const audioUrl = req.body.audioUrl || req.body.url;
+      let audioUrl = req.body.audioUrl || req.body.url;
+      if (audioUrl && audioUrl.startsWith('data:')) {
+        audioUrl = await uploadBase64ToCloudinary(audioUrl);
+      }
       let artist = req.body.artist;
       const desc = description || content.description;
       if (!artist && desc) {
