@@ -3,14 +3,26 @@ const { pool } = require('../config/db');
 const History = {
   async addHistory(userId, contentId) {
     const query = `
-      INSERT INTO histories (user_id, content_id, viewed_at)
+      INSERT INTO histories (
+        user_id,
+        content_id,
+        viewed_at
+      )
       VALUES ($1, $2, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, content_id)
+      DO UPDATE SET
+        viewed_at = CURRENT_TIMESTAMP
       RETURNING *;
     `;
-    const result = await pool.query(query, [userId, contentId]);
+
+    const result = await pool.query(query, [
+      userId,
+      contentId
+    ]);
+
     return result.rows[0];
   },
-
+  
   async findByUser(userId) {
     const query = `
       SELECT h.id as history_id, h.viewed_at, c.*, 
