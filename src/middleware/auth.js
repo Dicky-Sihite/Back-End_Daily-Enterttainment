@@ -17,7 +17,7 @@ function authenticateToken(req, res, next) {
 
   jwt.verify(token, process.env.JWT_SECRET, (error, user) => {
     if (error) {
-      return res.status(HTTP_STATUS.FORBIDDEN).json(
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
         createErrorResponse(ERROR_MESSAGES.INVALID_TOKEN)
       );
     }

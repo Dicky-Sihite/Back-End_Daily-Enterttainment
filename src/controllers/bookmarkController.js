@@ -1,4 +1,4 @@
-const BookmarkModel = require('../models/bookmarkModel');
+const Bookmark = require('../models/bookmarkModel');
 const { HTTP_STATUS, createSuccessResponse, createErrorResponse } = require('../utils/constants');
 
 const addBookmark = async (req, res) => {
@@ -12,10 +12,15 @@ const addBookmark = async (req, res) => {
       );
     }
 
-    const bookmark = await BookmarkModel.addBookmark(user_id, content_id);
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    const bookmark = await Bookmark.addBookmark(user_id, content_id);
     
     if (!bookmark) {
-      // If no bookmark is returned but no error thrown, it was likely skipped due to ON CONFLICT
       return res.status(HTTP_STATUS.OK).json(
         createSuccessResponse(null, 'Content already bookmarked')
       );
@@ -27,7 +32,7 @@ const addBookmark = async (req, res) => {
   } catch (error) {
     console.error('Add bookmark error:', error);
     return res.status(HTTP_STATUS.SERVER_ERROR).json(
-      createErrorResponse('Error adding bookmark')
+      createErrorResponse(error.message || 'Error adding bookmark')
     );
   }
 };
@@ -37,7 +42,13 @@ const removeBookmark = async (req, res) => {
     const { contentId } = req.params;
     const user_id = req.user ? (req.user.id || req.user.userId) : null;
 
-    const removed = await BookmarkModel.removeBookmark(user_id, contentId);
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    const removed = await Bookmark.removeBookmark(user_id, contentId);
 
     if (!removed) {
       return res.status(HTTP_STATUS.NOT_FOUND).json(
@@ -51,7 +62,7 @@ const removeBookmark = async (req, res) => {
   } catch (error) {
     console.error('Remove bookmark error:', error);
     return res.status(HTTP_STATUS.SERVER_ERROR).json(
-      createErrorResponse('Error removing bookmark')
+      createErrorResponse(error.message || 'Error removing bookmark')
     );
   }
 };
@@ -59,7 +70,14 @@ const removeBookmark = async (req, res) => {
 const getUserBookmarks = async (req, res) => {
   try {
     const user_id = req.user ? (req.user.id || req.user.userId) : null;
-    const bookmarks = await BookmarkModel.findByUser(user_id);
+
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    const bookmarks = await Bookmark.findByUser(user_id);
 
     return res.status(HTTP_STATUS.OK).json(
       createSuccessResponse(bookmarks, 'Bookmarks retrieved successfully')
@@ -67,7 +85,31 @@ const getUserBookmarks = async (req, res) => {
   } catch (error) {
     console.error('Get user bookmarks error:', error);
     return res.status(HTTP_STATUS.SERVER_ERROR).json(
-      createErrorResponse('Error retrieving bookmarks')
+      createErrorResponse(error.message || 'Error retrieving bookmarks')
+    );
+  }
+};
+
+const checkBookmark = async (req, res) => {
+  try {
+    const { contentId } = req.params;
+    const user_id = req.user ? (req.user.id || req.user.userId) : null;
+
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    const isBookmarked = await Bookmark.isBookmarked(user_id, contentId);
+
+    return res.status(HTTP_STATUS.OK).json(
+      createSuccessResponse({ isBookmarked }, 'Bookmark status retrieved')
+    );
+  } catch (error) {
+    console.error('Check bookmark error:', error);
+    return res.status(HTTP_STATUS.SERVER_ERROR).json(
+      createErrorResponse(error.message || 'Error checking bookmark')
     );
   }
 };
@@ -75,5 +117,6 @@ const getUserBookmarks = async (req, res) => {
 module.exports = {
   addBookmark,
   removeBookmark,
-  getUserBookmarks
+  getUserBookmarks,
+  checkBookmark
 };
