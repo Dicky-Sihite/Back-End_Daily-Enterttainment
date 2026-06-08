@@ -1,6 +1,9 @@
 const Content = require('../models/contentModel');
 const ContentCategory = require('../models/contentCategoryModel');
 const ContentType = require('../models/contentTypeModel');
+const MovieDetails = require('../models/movieDetailsModel');
+const MusicDetails = require('../models/musicDetailsModel');
+const NewsDetails = require('../models/newsDetailsModel');
 const { HTTP_STATUS, createSuccessResponse, createErrorResponse } = require('../utils/constants');
 
 const createContent = async (req, res) => {
@@ -38,8 +41,36 @@ const createContent = async (req, res) => {
       }
     }
 
+    // Automatically create details based on contentTypeId / slug of the type
+    const contentType = await ContentType.findById(contentTypeId);
+    const typeSlug = contentType ? contentType.slug.toLowerCase() : '';
+    
+    let details = null;
+    if (typeSlug === 'movie') {
+      const { director = 'Tidak diketahui', videoUrl = '#' } = req.body;
+      details = await MovieDetails.create(content.id, { director, videoUrl });
+    } else if (typeSlug === 'music') {
+      const { artist = 'Tidak diketahui', audioUrl = '#' } = req.body;
+      details = await MusicDetails.create(content.id, { artist, audioUrl });
+    } else if (typeSlug === 'news') {
+      const { author = 'Admin', body = description || '' } = req.body;
+      details = await NewsDetails.create(content.id, { author, body });
+    }
+
+    // Merge details into the returned content object for immediate frontend use
+    const contentWithDetails = {
+      ...content,
+      director: details ? details.director : undefined,
+      video_url: details ? details.video_url : undefined,
+      artist: details ? details.artist : undefined,
+      audio_url: details ? details.audio_url : undefined,
+      author: details ? details.author : undefined,
+      body: details ? details.body : undefined,
+      url: details ? (details.video_url || details.audio_url) : undefined
+    };
+
     return res.status(HTTP_STATUS.CREATED).json(
-      createSuccessResponse(content, 'Content created successfully')
+      createSuccessResponse(contentWithDetails, 'Content created successfully')
     );
   } catch (error) {
     console.error('Create content error:', error);
@@ -115,8 +146,56 @@ const updateContent = async (req, res) => {
       publishedAt
     });
 
+    // Automatically update details based on content type
+    const contentType = await ContentType.findById(content.content_type_id);
+    const typeSlug = contentType ? contentType.slug.toLowerCase() : '';
+
+    let details = null;
+    if (typeSlug === 'movie') {
+      const { director, videoUrl } = req.body;
+      if (director || videoUrl) {
+        const existing = await MovieDetails.findByContentId(id);
+        if (existing) {
+          details = await MovieDetails.update(id, { director, videoUrl });
+        } else {
+          details = await MovieDetails.create(id, { director: director || 'Tidak diketahui', videoUrl: videoUrl || '#' });
+        }
+      }
+    } else if (typeSlug === 'music') {
+      const { artist, audioUrl } = req.body;
+      if (artist || audioUrl) {
+        const existing = await MusicDetails.findByContentId(id);
+        if (existing) {
+          details = await MusicDetails.update(id, { artist, audioUrl });
+        } else {
+          details = await MusicDetails.create(id, { artist: artist || 'Tidak diketahui', audioUrl: audioUrl || '#' });
+        }
+      }
+    } else if (typeSlug === 'news') {
+      const { author, body } = req.body;
+      if (author || body) {
+        const existing = await NewsDetails.findByContentId(id);
+        if (existing) {
+          details = await NewsDetails.update(id, { author, body });
+        } else {
+          details = await NewsDetails.create(id, { author: author || 'Admin', body: body || description || '' });
+        }
+      }
+    }
+
+    const updatedWithDetails = {
+      ...updated,
+      director: details ? details.director : undefined,
+      video_url: details ? details.video_url : undefined,
+      artist: details ? details.artist : undefined,
+      audio_url: details ? details.audio_url : undefined,
+      author: details ? details.author : undefined,
+      body: details ? details.body : undefined,
+      url: details ? (details.video_url || details.audio_url) : undefined
+    };
+
     return res.status(HTTP_STATUS.OK).json(
-      createSuccessResponse(updated, 'Content updated successfully')
+      createSuccessResponse(updatedWithDetails, 'Content updated successfully')
     );
   } catch (error) {
     console.error('Update content error:', error);

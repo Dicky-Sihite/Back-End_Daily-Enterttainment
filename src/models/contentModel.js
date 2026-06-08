@@ -36,15 +36,25 @@ const Content = {
       SELECT c.*, 
              ct.name as content_type_name, 
              u.username as author_name,
-             array_agg(cat.id) as category_ids,
-             array_agg(cat.name) as category_names
+             array_agg(DISTINCT cat.id) as category_ids,
+             array_agg(DISTINCT cat.name) as category_names,
+             md.director as director,
+             md.video_url as video_url,
+             msd.artist as artist,
+             msd.audio_url as audio_url,
+             nd.author as author,
+             nd.body as body,
+             COALESCE(md.video_url, msd.audio_url) as url
       FROM contents c
       LEFT JOIN content_types ct ON c.content_type_id = ct.id
       LEFT JOIN users u ON c.user_id = u.id
       LEFT JOIN content_categories cc ON c.id = cc.content_id
       LEFT JOIN categories cat ON cc.category_id = cat.id
+      LEFT JOIN movie_details md ON c.id = md.content_id
+      LEFT JOIN music_details msd ON c.id = msd.content_id
+      LEFT JOIN news_details nd ON c.id = nd.content_id
       WHERE c.id = $1
-      GROUP BY c.id, ct.name, u.username;
+      GROUP BY c.id, ct.name, u.username, md.director, md.video_url, msd.artist, msd.audio_url, nd.author, nd.body;
     `;
 
     const result = await pool.query(query, [id]);
@@ -57,12 +67,22 @@ const Content = {
              ct.name as content_type_name, 
              u.username as author_name,
              array_agg(DISTINCT cat.id) as category_ids,
-             array_agg(DISTINCT cat.name) as category_names
+             array_agg(DISTINCT cat.name) as category_names,
+             md.director as director,
+             md.video_url as video_url,
+             msd.artist as artist,
+             msd.audio_url as audio_url,
+             nd.author as author,
+             nd.body as body,
+             COALESCE(md.video_url, msd.audio_url) as url
       FROM contents c
       LEFT JOIN content_types ct ON c.content_type_id = ct.id
       LEFT JOIN users u ON c.user_id = u.id
       LEFT JOIN content_categories cc ON c.id = cc.content_id
       LEFT JOIN categories cat ON cc.category_id = cat.id
+      LEFT JOIN movie_details md ON c.id = md.content_id
+      LEFT JOIN music_details msd ON c.id = msd.content_id
+      LEFT JOIN news_details nd ON c.id = nd.content_id
       WHERE 1=1
     `;
 
@@ -82,7 +102,7 @@ const Content = {
       values.push(filters.contentTypeId);
     }
 
-    query += ` GROUP BY c.id, ct.name, u.username
+    query += ` GROUP BY c.id, ct.name, u.username, md.director, md.video_url, msd.artist, msd.audio_url, nd.author, nd.body
                ORDER BY c.created_at DESC;`;
 
     const result = await pool.query(query, values);
