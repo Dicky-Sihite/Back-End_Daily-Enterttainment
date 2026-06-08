@@ -3,6 +3,7 @@ const router = express.Router();
 const { register, login, refresh, logout } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 const { authorizeRoles } = require('../middleware/role');
+const uploadRoutes = require("./uploadRoutes");
 const { 
   createContent, 
   getAllContents, 
@@ -205,5 +206,8 @@ router.get('/users', authenticateToken, authorizeRoles('admin'), getAllUsers);
 router.post('/users', authenticateToken, authorizeRoles('admin'), createUser);
 router.put('/users/:id', authenticateToken, authorizeRoles('admin'), updateUser);
 router.delete('/users/:id', authenticateToken, authorizeRoles('admin'), deleteUser);
+
+// CLOUDINARY
+router.use(uploadRoutes);
 
 module.exports = router;
