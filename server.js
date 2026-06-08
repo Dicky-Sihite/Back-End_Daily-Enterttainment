@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
 const app = require("./src/app.js");
 const { connectDB } = require("./src/config/db.js");
 
