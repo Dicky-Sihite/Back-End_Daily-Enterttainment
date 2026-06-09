@@ -34,7 +34,7 @@ const History = {
       LEFT JOIN content_types ct ON c.content_type_id = ct.id
       LEFT JOIN content_categories cc ON c.id = cc.content_id
       LEFT JOIN categories cat ON cc.category_id = cat.id
-      WHERE h.user_id = $1
+      WHERE h.user_id = $1 AND c.deleted_at IS NULL
       GROUP BY h.id, h.viewed_at, c.id, ct.name
       ORDER BY h.viewed_at DESC;
     `;

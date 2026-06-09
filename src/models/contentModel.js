@@ -53,7 +53,7 @@ const Content = {
       LEFT JOIN movie_details md ON c.id = md.content_id
       LEFT JOIN music_details msd ON c.id = msd.content_id
       LEFT JOIN news_details nd ON c.id = nd.content_id
-      WHERE c.id = $1
+      WHERE c.id = $1 AND c.deleted_at IS NULL
       GROUP BY c.id, ct.name, u.username, md.director, md.video_url, msd.artist, msd.audio_url, nd.author, nd.body;
     `;
 
@@ -83,7 +83,7 @@ const Content = {
       LEFT JOIN movie_details md ON c.id = md.content_id
       LEFT JOIN music_details msd ON c.id = msd.content_id
       LEFT JOIN news_details nd ON c.id = nd.content_id
-      WHERE 1=1
+      WHERE c.deleted_at IS NULL
     `;
 
     const values = [];
