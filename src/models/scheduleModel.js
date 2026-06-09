@@ -49,9 +49,9 @@ const Schedule = {
     const query = `
       SELECT s.*, c.title as content_title, u.username as creator_name
       FROM schedules s
-      LEFT JOIN contents c ON s.content_id = c.id
+      JOIN contents c ON s.content_id = c.id
       LEFT JOIN users u ON s.created_by = u.id
-      WHERE s.id = $1;
+      WHERE s.id = $1 AND c.deleted_at IS NULL;
     `;
 
     const result = await pool.query(query, [id]);
@@ -75,8 +75,8 @@ const Schedule = {
     const query = `
       SELECT s.*, c.title as content_title
       FROM schedules s
-      LEFT JOIN contents c ON s.content_id = c.id
-      WHERE s.created_by = $1
+      JOIN contents c ON s.content_id = c.id
+      WHERE s.created_by = $1 AND c.deleted_at IS NULL
       ORDER BY s.start_datetime DESC;
     `;
 
@@ -88,9 +88,9 @@ const Schedule = {
     const query = `
       SELECT s.*, c.title as content_title, u.username as creator_name
       FROM schedules s
-      LEFT JOIN contents c ON s.content_id = c.id
+      JOIN contents c ON s.content_id = c.id
       LEFT JOIN users u ON s.created_by = u.id
-      WHERE s.status = 'active'
+      WHERE s.status = 'active' AND c.deleted_at IS NULL
       ORDER BY s.start_datetime ASC;
     `;
 

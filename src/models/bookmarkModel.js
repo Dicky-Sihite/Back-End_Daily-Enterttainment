@@ -33,7 +33,7 @@ const Bookmark = {
       LEFT JOIN content_types ct ON c.content_type_id = ct.id
       LEFT JOIN content_categories cc ON c.id = cc.content_id
       LEFT JOIN categories cat ON cc.category_id = cat.id
-      WHERE b.user_id = $1
+      WHERE b.user_id = $1 AND c.deleted_at IS NULL
       GROUP BY b.id, b.created_at, c.id, ct.name
       ORDER BY b.created_at DESC;
     `;

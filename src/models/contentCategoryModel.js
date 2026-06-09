@@ -37,7 +37,7 @@ const ContentCategory = {
     const query = `
       SELECT c.* FROM contents c
       JOIN content_categories cc ON c.id = cc.content_id
-      WHERE cc.category_id = $1;
+      WHERE cc.category_id = $1 AND c.deleted_at IS NULL;
     `;
 
     const result = await pool.query(query, [categoryId]);
