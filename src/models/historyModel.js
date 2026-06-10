@@ -53,6 +53,16 @@ const History = {
     return result.rows[0];
   },
 
+  async removeHistory(userId, contentId) {
+    const query = `
+      DELETE FROM histories
+      WHERE user_id = $1 AND content_id = $2
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [userId, contentId]);
+    return result.rows[0];
+  },
+
   async clearUserHistory(userId) {
     const query = `
       DELETE FROM histories

@@ -14,7 +14,7 @@ const {
   removeCategoryFromContent
 } = require('../controllers/contentController');
 const { addBookmark, removeBookmark, getUserBookmarks, checkBookmark } = require('../controllers/bookmarkController');
-const { trackHistory, getUserHistory, clearUserHistory } = require('../controllers/historyController');
+const { trackHistory, getUserHistory, clearUserHistory, removeHistory } = require('../controllers/historyController');
 const {
   createPlan,
   getAllPlans,
@@ -142,6 +142,7 @@ router.get('/bookmarks/:contentId', authenticateToken, checkBookmark);
 router.post('/histories', authenticateToken, trackHistory);
 router.get('/histories', authenticateToken, getUserHistory);
 router.delete('/histories', authenticateToken, clearUserHistory);
+router.delete('/histories/:contentId', authenticateToken, removeHistory);
 
 // PLAN routes
 router.post('/plans', authenticateToken, authorizeRoles('admin'), createPlan);
