@@ -76,8 +76,39 @@ const clearUserHistory = async (req, res) => {
   }
 };
 
+const removeHistory = async (req, res) => {
+  try {
+    const { contentId } = req.params;
+    const user_id = req.user ? (req.user.id || req.user.userId) : null;
+
+    if (!user_id) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(
+        createErrorResponse('User not authenticated')
+      );
+    }
+
+    const removed = await History.removeHistory(user_id, contentId);
+
+    if (!removed) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json(
+        createErrorResponse('History item not found')
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json(
+      createSuccessResponse(null, 'History item removed successfully')
+    );
+  } catch (error) {
+    console.error('Remove history error:', error);
+    return res.status(HTTP_STATUS.SERVER_ERROR).json(
+      createErrorResponse(error.message || 'Error removing history item')
+    );
+  }
+};
+
 module.exports = {
   trackHistory,
   getUserHistory,
-  clearUserHistory
+  clearUserHistory,
+  removeHistory
 };
