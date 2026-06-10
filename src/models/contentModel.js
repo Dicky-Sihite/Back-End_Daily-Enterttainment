@@ -32,6 +32,9 @@ const Content = {
   },
 
   async findById(id) {
+    const isNumeric = !isNaN(id) && !isNaN(parseFloat(id));
+    const whereClause = isNumeric ? 'c.id = $1' : 'c.slug = $1';
+
     const query = `
       SELECT c.*, 
              ct.name as content_type_name, 
@@ -53,11 +56,11 @@ const Content = {
       LEFT JOIN movie_details md ON c.id = md.content_id
       LEFT JOIN music_details msd ON c.id = msd.content_id
       LEFT JOIN news_details nd ON c.id = nd.content_id
-      WHERE c.id = $1 AND c.deleted_at IS NULL
+      WHERE ${whereClause} AND c.deleted_at IS NULL
       GROUP BY c.id, ct.name, u.username, md.director, md.video_url, msd.artist, msd.audio_url, nd.author, nd.body;
     `;
 
-    const result = await pool.query(query, [id]);
+    const result = await pool.query(query, [isNumeric ? parseInt(id, 10) : id]);
     return result.rows[0];
   },
 
