@@ -126,7 +126,7 @@ router.get(
 // CONTENT routes
 router.post('/contents', authenticateToken, createContent);
 router.get('/contents', getAllContents);
-router.get('/contents/:id', getContentById);
+router.get('/contents/:id', authenticateToken, getContentById);
 router.put('/contents/:id', authenticateToken, updateContent);
 router.delete('/contents/:id', authenticateToken, deleteContent);
 router.post('/contents/category', authenticateToken, addCategoryToContent);
@@ -188,7 +188,7 @@ router.delete('/content-types/:id', authenticateToken, authorizeRoles('admin'), 
 
 // CONTENT DETAIL routes (Music / Movie / News — auto-resolved by content type)
 router.post('/contents/:contentId/details', authenticateToken, createDetail);
-router.get('/contents/:contentId/details', getDetail);
+router.get('/contents/:contentId/details', authenticateToken, getDetail);
 router.put('/contents/:contentId/details', authenticateToken, updateDetail);
 router.delete('/contents/:contentId/details', authenticateToken, deleteDetail);
 
