@@ -165,10 +165,10 @@ router.put('/payments/:id/refund', authenticateToken, authorizeRoles('admin'), r
 
 // SCHEDULE routes
 router.post('/schedules', authenticateToken, authorizeRoles('admin', 'moderator'), createSchedule);
-router.get('/schedules', authenticateToken, getActiveSchedules);
-router.get('/schedules/content/:contentId', authenticateToken, getSchedulesByContent);
+router.get('/schedules', getActiveSchedules);
+router.get('/schedules/content/:contentId', getSchedulesByContent);
 router.get('/schedules/user', authenticateToken, getSchedulesByUser);
-router.get('/schedules/:id', authenticateToken, getScheduleById);
+router.get('/schedules/:id', getScheduleById);
 router.put('/schedules/:id', authenticateToken, updateSchedule);
 router.delete('/schedules/:id', authenticateToken, deleteSchedule);
 
