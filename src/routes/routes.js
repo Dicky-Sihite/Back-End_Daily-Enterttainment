@@ -126,7 +126,7 @@ router.get(
 // CONTENT routes
 router.post('/contents', authenticateToken, createContent);
 router.get('/contents', getAllContents);
-router.get('/contents/:id', getContentById);
+router.get('/contents/:id', authenticateToken, getContentById);
 router.put('/contents/:id', authenticateToken, updateContent);
 router.delete('/contents/:id', authenticateToken, deleteContent);
 router.post('/contents/category', authenticateToken, addCategoryToContent);
@@ -165,10 +165,10 @@ router.put('/payments/:id/refund', authenticateToken, authorizeRoles('admin'), r
 
 // SCHEDULE routes
 router.post('/schedules', authenticateToken, authorizeRoles('admin', 'moderator'), createSchedule);
-router.get('/schedules', authenticateToken, getActiveSchedules);
-router.get('/schedules/content/:contentId', authenticateToken, getSchedulesByContent);
+router.get('/schedules', getActiveSchedules);
+router.get('/schedules/content/:contentId', getSchedulesByContent);
 router.get('/schedules/user', authenticateToken, getSchedulesByUser);
-router.get('/schedules/:id', authenticateToken, getScheduleById);
+router.get('/schedules/:id', getScheduleById);
 router.put('/schedules/:id', authenticateToken, updateSchedule);
 router.delete('/schedules/:id', authenticateToken, deleteSchedule);
 
@@ -188,7 +188,7 @@ router.delete('/content-types/:id', authenticateToken, authorizeRoles('admin'), 
 
 // CONTENT DETAIL routes (Music / Movie / News — auto-resolved by content type)
 router.post('/contents/:contentId/details', authenticateToken, createDetail);
-router.get('/contents/:contentId/details', getDetail);
+router.get('/contents/:contentId/details', authenticateToken, getDetail);
 router.put('/contents/:contentId/details', authenticateToken, updateDetail);
 router.delete('/contents/:contentId/details', authenticateToken, deleteDetail);
 
