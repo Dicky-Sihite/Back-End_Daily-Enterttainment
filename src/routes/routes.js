@@ -205,7 +205,7 @@ router.get('/roles/user/:userId', authenticateToken, authorizeRoles('admin', 'mo
 // USER MANAGEMENT routes
 router.get('/users', authenticateToken, authorizeRoles('admin'), getAllUsers);
 router.post('/users', authenticateToken, authorizeRoles('admin'), createUser);
-router.put('/users/:id', authenticateToken, authorizeRoles('admin'), updateUser);
+router.put('/users/:id', authenticateToken, updateUser);
 router.delete('/users/:id', authenticateToken, authorizeRoles('admin'), deleteUser);
 
 // CLOUDINARY

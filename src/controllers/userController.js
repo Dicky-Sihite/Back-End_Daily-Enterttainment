@@ -10,6 +10,7 @@ const getAllUsers = async (req, res) => {
         u.username,
         u.username AS name,
         u.email,
+        u.avatar,
         u.created_at AS joined,
         CASE
           WHEN EXISTS (
@@ -121,7 +122,19 @@ const createUser = async (req, res) => {
 // UPDATE AN EXISTING USER (DETAILS & ROLE)
 const updateUser = async (req, res) => {
   const { id } = req.params;
-  const { username, email, role, password } = req.body;
+  const { username, email, role, password, avatar } = req.body;
+
+  const requesterId = req.user ? (req.user.id || req.user.userId) : null;
+  const requesterRoles = req.user ? req.user.roles : [];
+  const isAdmin = requesterRoles.includes('admin');
+
+  // If not admin and not updating themselves, deny access
+  if (!isAdmin && String(requesterId) !== String(id)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Akses ditolak'
+    });
+  }
 
   const client = await pool.connect();
   try {
@@ -154,6 +167,10 @@ const updateUser = async (req, res) => {
       updates.push(`password_hash = $${paramIndex++}`);
       values.push(passwordHash);
     }
+    if (avatar !== undefined) {
+      updates.push(`avatar = $${paramIndex++}`);
+      values.push(avatar);
+    }
 
     if (updates.length > 0) {
       updates.push(`updated_at = CURRENT_TIMESTAMP`);
@@ -163,13 +180,13 @@ const updateUser = async (req, res) => {
         UPDATE users
         SET ${updates.join(', ')}
         WHERE id = $${paramIndex}
-        RETURNING id, username, email;
+        RETURNING id, username, email, avatar;
       `;
       await client.query(updateQuery, values);
     }
 
-    // Update role if provided
-    if (role) {
+    // Update role if provided (only admins can change roles)
+    if (role && isAdmin) {
       // Clear existing roles
       await client.query('DELETE FROM user_roles WHERE user_id = $1', [id]);
       

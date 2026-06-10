@@ -13,7 +13,7 @@ const User = {
 
   async findById(id) {
     const query = `
-      SELECT id, username, email, created_at, updated_at
+      SELECT id, username, email, avatar, created_at, updated_at
       FROM users
       WHERE id = $1;
     `;
@@ -23,7 +23,7 @@ const User = {
 
   async findByEmail(email) {
     const query = `
-      SELECT id, username, email, password_hash, created_at, updated_at
+      SELECT id, username, email, password_hash, avatar, created_at, updated_at
       FROM users
       WHERE email = $1;
     `;
@@ -33,7 +33,7 @@ const User = {
 
   async findByUsername(username) {
     const query = `
-      SELECT id, username, email, created_at, updated_at
+      SELECT id, username, email, avatar, created_at, updated_at
       FROM users
       WHERE username = $1;
     `;
@@ -58,6 +58,10 @@ const User = {
       fields.push(`password_hash = $${paramCount++}`);
       values.push(data.password_hash);
     }
+    if (data.avatar !== undefined) {
+      fields.push(`avatar = $${paramCount++}`);
+      values.push(data.avatar);
+    }
 
     fields.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(id);
@@ -66,7 +70,7 @@ const User = {
       UPDATE users
       SET ${fields.join(', ')}
       WHERE id = $${paramCount}
-      RETURNING id, username, email, created_at, updated_at;
+      RETURNING id, username, email, avatar, created_at, updated_at;
     `;
 
     const result = await pool.query(query, values);

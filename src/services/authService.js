@@ -154,6 +154,7 @@ async function loginUser(email, password) {
       id: user.id,
       username: user.username,
       email: user.email,
+      avatar: user.avatar,
       roles,
     },
   };
