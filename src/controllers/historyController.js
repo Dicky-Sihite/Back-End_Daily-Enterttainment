@@ -1,4 +1,5 @@
 const History = require('../models/historyModel');
+const Content = require('../models/contentModel');
 const { HTTP_STATUS, createSuccessResponse, createErrorResponse } = require('../utils/constants');
 
 const trackHistory = async (req, res) => {
@@ -19,9 +20,14 @@ const trackHistory = async (req, res) => {
     }
 
     const history = await History.addHistory(user_id, content_id);
+
+    // Increment views_count setiap kali user menonton konten
+    await Content.incrementViews(content_id);
+
     return res.status(HTTP_STATUS.CREATED).json(
       createSuccessResponse(history, 'History tracked successfully')
     );
+
   } catch (error) {
     console.error('Track history error:', error);
     return res.status(HTTP_STATUS.SERVER_ERROR).json(

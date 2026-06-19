@@ -9,9 +9,6 @@ const History = {
         viewed_at
       )
       VALUES ($1, $2, CURRENT_TIMESTAMP)
-      ON CONFLICT (user_id, content_id)
-      DO UPDATE SET
-        viewed_at = CURRENT_TIMESTAMP
       RETURNING *;
     `;
 
