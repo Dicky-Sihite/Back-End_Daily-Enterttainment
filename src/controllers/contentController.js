@@ -156,9 +156,6 @@ const getContentById = async (req, res) => {
         createErrorResponse('Content not found')
       );
     }
-
-    // Increment view count
-    await Content.incrementViews(id);
     
     return res.status(HTTP_STATUS.OK).json(
       createSuccessResponse(content, 'Content retrieved successfully')
