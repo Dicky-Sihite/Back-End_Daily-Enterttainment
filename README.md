@@ -2,14 +2,14 @@
 
 Backend API untuk aplikasi Daily Entertainment.
 
-## 📋 Prerequisites
+## Prerequisites
 
 Sebelum install, pastikan sudah install:
 - **Node.js** v14+ ([download](https://nodejs.org))
 - **PostgreSQL** v12+ ([download](https://www.postgresql.org))
 - **Git**
 
-## 🚀 Instalasi
+## Instalasi
 
 ### 1. Clone Repository
 ```bash
@@ -78,7 +78,7 @@ npm start
 
 Server akan running di `http://localhost:3000`
 
-## 📁 Struktur Project
+## Struktur Project
 ```
 src/
 ├── config/          # Database connection
@@ -101,7 +101,7 @@ server.js           # Entry point
 
 Lihat [API_TESTING_GUIDE.md](API_TESTING_GUIDE.md) untuk detail lengkap.
 
-## 🛠️ Development
+## Development
 
 ### Scripts
 ```bash
